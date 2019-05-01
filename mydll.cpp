@@ -67,6 +67,8 @@ info.myCommandList.addCommand(Move,aim_soldier_id,UP,distance);//ÒÆ¶¯ÃüÁî£¬µÚ¶þ¸
 */
 #define inf 10000
 
+bool user_pos[50][50];// all positions taken by users
+
 char cmap(int x, int y) {
 	return Map[x + (49 - y) * 50];
 }
@@ -74,7 +76,10 @@ char cmap(int x, int y) {
 bool empty(int x, int y) {
 	if (x >= 0 && x < 50 && y >= 0 && y < 50) {
 		auto t = cmap(x, y);
-		return (t != 3 && t < 6);
+		/*if (user_pos[x][y]) {
+			printf("(%d,%d)", x, y);
+		}*/
+		return (t != 3 && t < 6)&&!user_pos[x][y];
 	} else {
 		return false;
 	}
@@ -105,11 +110,7 @@ int odis(int x1, int y1, int x2, int y2,int thres=3) {
 	que.push({ dis(x1,y1,x2,y2),0,x1,y1 });
 	//printf("looking for (%d,%d) to (%d,%d)\n", x1, y1, x2, y2);
 	bool visited[50][50];
-	for (int i = 0; i < 50; ++i) {
-		for (int j = 0; j < 50; ++j) {
-			visited[i][j] = false;
-		}
-	}
+	memset(*visited, 0, 2500);
 	visited[x1][y1] = true;
 	while (!que.empty()) {
 		auto p = que.top();
@@ -226,6 +227,7 @@ public:
 		struct tmp {
 			int dis, dx,dy;
 		};
+		user_pos[mx][my] = 0;
 		for (int i = 0; i < step; ++i) {
 			if (step <= 0) {
 				break;
@@ -289,8 +291,10 @@ public:
 				}
 			}
 			if (mindis != inf) {
+				user_pos[mx][my] = 0;
 				mx += dx;
 				my += dy;
+				user_pos[mx][my] = 1;
 				step -= abs(dx) + abs(dy);
 				if (dx > 0) {
 					info.myCommandList.addCommand(Move, self.id, RIGHT, dx);
@@ -307,6 +311,7 @@ public:
 			}
 			//printf("(%d,%d) to (%d,%d) = (%d,%d)\n", mx, my, x, y, dx, dy);
 		}
+		user_pos[mx][my] = 1;
 	}
 	void go(Info& info, const TPoint& p) {
 		go(info, p.x, p.y);
@@ -330,7 +335,9 @@ void player_ai(Info& info)
 			info.myCommandList.addCommand(Produce, i, HeavyArcher);
 		}
 	}
+	memset(*user_pos, 0, 2500);
 	for (auto i : info.soldierInfo) {
+		user_pos[i.x_position][i.y_position] = 1;
 		if (i.owner == info.myID && !soldiers[i.id]) {
 			//printf("add %d(%d,%d)\n", i.id,i.x_position,i.y_position);
 			ai.push_back({ i.id });
