@@ -86,8 +86,12 @@ int dis(int x1, int y1, int x2, int y2) {
 	return abs(x1 - x2) + abs(y1 - y2);
 }
 
-int dis(const TPoint & p1, const TPoint & p2) {
+int dis(const TPoint& p1, const TPoint& p2) {
 	return dis(p1.x, p1.y, p2.x, p2.y);
+}
+
+int dis(const TPoint& p1, int x,int y) {
+	return dis(p1.x, p1.y, x,y);
 }
 
 struct odisn {
@@ -101,10 +105,11 @@ bool operator<(odisn a, odisn b) {
 bool visited[50][50];
 priority_queue <odisn> que;
 
-int odis(int x1, int y1, int x2, int y2, int thres = 3) {
+int odis(int x1, int y1, int x2, int y2, int thres = 2) {
 	if (!empty(x1, y1)) {
 		return inf;
 	}
+	int closest = inf;
 	priority_queue <odisn> quee;
 	que.swap(quee);
 	que.push({ dis(x1,y1,x2,y2),0,x1,y1 });
@@ -115,9 +120,12 @@ int odis(int x1, int y1, int x2, int y2, int thres = 3) {
 		auto p = que.top();
 		que.pop();
 		int t;
-		if ((t = dis(p.x, p.y, x2, y2)) <= thres) {
+		if (2*p.prio < closest) {
+			closest = 2*p.prio;
+		}
+		if (p.prio <= thres) {
 			//printf("answer is:%d\n", p.dis + t);
-			return p.dis + t;
+			return p.dis + p.prio;
 		}
 		int tmp = p.dis + 1;
 		if (!visited[p.x + 1][p.y] && empty(p.x + 1, p.y)) {
@@ -137,10 +145,10 @@ int odis(int x1, int y1, int x2, int y2, int thres = 3) {
 			que.push({ dis(p.x,p.y - 1,x2,y2),tmp,p.x,p.y - 1 });
 		}
 	}
-	return inf;
+	return closest;
 }
 
-int odis(const TPoint & p1, const TPoint & p2, int thres = 3) {
+int odis(const TPoint & p1, const TPoint & p2, int thres = 2) {
 	return odis(p1.x, p1.y, p2.x, p2.y, thres);
 }
 
@@ -154,6 +162,7 @@ public:
 	int last_x = -1;
 	int last_y = -1;
 	bool alive = true;
+	Info ifo;
 	AI(int id_) {
 		id = id_;
 		mission = attack_tower;
@@ -167,6 +176,7 @@ public:
 				break;
 			}
 		}
+		ifo = info;
 	}
 	void move(Info& info) {
 		//TODO: add enemy attack 
@@ -181,6 +191,13 @@ public:
 					continue;
 				}
 				int tmp = dis(self.position, i.position);
+				int soldier=0;
+				for (auto s : info.soldierInfo) {
+					if (s.owner != info.myID && dis(s.position, i.position) < 8) {
+						soldier += 1;
+					}
+				}
+				tmp += soldier * 3;
 				if (tmp < d) {
 					d = tmp;
 					id = i.id;
@@ -202,7 +219,7 @@ public:
 				//change mission
 				//printf("blank2");
 			} else {
-				if (dis(self.position, target) < self.range + 2) {
+				if (dis(self.position, target) < self.range + 2) {//arrived
 					int dx = 0, dy = 0;
 					if (self.x_position > target.x) {
 						dx = 1;
@@ -252,56 +269,56 @@ public:
 			int mindis = inf;
 			int tdis;
 			if (empty(mx + 1, my)) {
-				if ((tdis = odis(mx + 1, my, x, y)) < mindis) {
+				if ((tdis = ddis(mx + 1, my, x, y)) < mindis) {
 					dx = 1;
 					dy = 0;
 					mindis = tdis;
 				}
 			}
 			if (empty(mx - 1, my)) {
-				if ((tdis = odis(mx - 1, my, x, y)) < mindis) {
+				if ((tdis = ddis(mx - 1, my, x, y)) < mindis) {
 					dx = -1;
 					dy = 0;
 					mindis = tdis;
 				}
 			}
 			if (empty(mx, my + 1)) {
-				if ((tdis = odis(mx, my + 1, x, y)) < mindis) {
+				if ((tdis = ddis(mx, my + 1, x, y)) < mindis) {
 					dx = 0;
 					dy = 1;
 					mindis = tdis;
 				}
 			}
 			if (empty(mx, my - 1)) {
-				if ((tdis = odis(mx, my - 1, x, y)) < mindis) {
+				if ((tdis = ddis(mx, my - 1, x, y)) < mindis) {
 					dx = 0;
 					dy = -1;
 					mindis = tdis;
 				}
 			}
 			if (step >= 2 && empty(mx + 2, my)) {
-				if ((tdis = odis(mx + 2, my, x, y)) < mindis) {
+				if ((tdis = ddis(mx + 2, my, x, y)) < mindis) {
 					dx = 2;
 					dy = 0;
 					mindis = tdis;
 				}
 			}
 			if (step >= 2 && empty(mx - 2, my)) {
-				if ((tdis = odis(mx - 2, my, x, y)) < mindis) {
+				if ((tdis = ddis(mx - 2, my, x, y)) < mindis) {
 					dx = -2;
 					dy = 0;
 					mindis = tdis;
 				}
 			}
 			if (step >= 2 && empty(mx, my + 2)) {
-				if ((tdis = odis(mx, my + 2, x, y)) < mindis) {
+				if ((tdis = ddis(mx, my + 2, x, y)) < mindis) {
 					dx = 0;
 					dy = 2;
 					mindis = tdis;
 				}
 			}
 			if (step >= 2 && empty(mx, my - 2)) {
-				if ((tdis = odis(mx, my - 2, x, y)) < mindis) {
+				if ((tdis = ddis(mx, my - 2, x, y)) < mindis) {
 					dx = 0;
 					dy = -2;
 					mindis = tdis;
@@ -323,6 +340,18 @@ public:
 				if (dy < 0) {
 					info.myCommandList.addCommand(Move, self.id, DOWN, -dy);
 				}
+			}
+			auto list = get_enemy(info, mx, my);
+			if (list.size() != 0) {
+				enemy l_e=list[0];
+				int least_danger = l_e.danger;
+				for (auto e : list) {
+					if (e.danger < least_danger) {
+						least_danger = e.danger;
+						l_e = e;
+					}
+				}
+				info.myCommandList.addCommand(Attack, self.id, l_e.s.x_position, l_e.s.y_position);
 			}
 			//printf("(%d,%d) to (%d,%d) = (%d,%d)\n", mx, my, x, y, dx, dy);
 		}
@@ -346,6 +375,58 @@ public:
 	void go(Info & info, const TPoint & p) {
 		go(info, p.x, p.y);
 	}
+	struct enemy {
+		TSoldier s;
+		int danger, attack_s, attack_me, dis, harm_s, harm_me;
+	};
+
+	vector<enemy> get_enemy(Info& info,int x,int y) {
+		vector<enemy> list;
+		for (auto s : info.soldierInfo) {
+			if (s.owner == info.myID) {
+				continue;
+			}
+			enemy e;
+			e.s = s;
+			e.dis = dis(s.position, x, y);
+			if (e.dis <= s.move_ability + s.range) {
+				e.harm_s = s.attack - self.armor;
+				if (e.harm_s<=0) {
+					e.attack_s = inf;
+				} else {
+					e.attack_s = self.blood/e.harm_s+((self.blood%e.harm_s==0)?0:1);
+				}
+			}
+			if (e.dis <=  self.range) {//no [self.move_left +] for now
+				e.harm_me = self.attack - s.armor;
+				if (e.harm_me <= 0) {
+					e.attack_me = inf;
+				} else {
+					e.attack_me = s.blood / e.harm_me + ((s.blood % e.harm_me == 0) ? 0 : 1);
+				}
+			}
+			e.danger = -(e.attack_s == inf ? 20 : e.attack_s) + (e.attack_me == inf ? 20 : e.attack_me) + self.blood / 10;
+			list.push_back(e);
+		}
+		return list;
+	}
+	int get_danger(Info& info, int x, int y) {
+		auto list = get_enemy(info, x, y);
+		if (list.size() == 0) {
+			return 0;
+		} else {
+			int d = 0;
+			for (auto i : list) {
+				d += i.danger;
+			}
+			return d;
+		}
+	}
+	int ddis(int x1, int y1, int x2, int y2) {
+		int d = get_danger(ifo, x1, y1);
+		d = d < 0 ? -1 : d;
+		return odis(x1,y1,x2,y2) + d;
+	}
 };
 
 
@@ -362,7 +443,21 @@ void player_ai(Info & info)
 	}
 	for (int i = 0; i < info.towerNum; i++) {
 		if (info.towerInfo[i].owner == info.myID && !info.towerInfo[i].recruiting) {
-			info.myCommandList.addCommand(Produce, i, HeavyArcher);
+			switch (info.myID) {
+			case 0:
+				info.myCommandList.addCommand(Produce, i, HeavyArcher);
+				break;
+			case 1:
+				info.myCommandList.addCommand(Produce, i, HeavyInfantry);
+				break;
+			case 2:
+				info.myCommandList.addCommand(Produce, i, HeavyKnight);
+				break;
+			default:
+				info.myCommandList.addCommand(Produce, i, LightKnight);
+				break;
+			}
+			//info.myCommandList.addCommand(Produce, i, HeavyArcher);
 		}
 	}
 	memset(*user_pos, 0, 2500);
